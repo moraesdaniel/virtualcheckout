@@ -1,5 +1,6 @@
 const sequelize = require("sequelize");
 const connection = require("../dao/connection");
+const user = require("../user/User");
 
 const checkout = connection.define("checkout", {
     description: {
@@ -7,6 +8,8 @@ const checkout = connection.define("checkout", {
         allowNull: false
     }
 });
+
+checkout.belongsTo(user);
 
 checkout.sync({ force: false });
 
