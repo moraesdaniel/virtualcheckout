@@ -9,12 +9,19 @@ const jwtTokenPrivate = "virtualcheckout2020";
 router.post("/user", (req, res) => {
     var { name, email, password } = req.body;
     
-    if (name == undefined) {
+    if ((name == undefined) || (name.trim() == "")){
         res.statusCode = 400;
         res.json({ error: "Invalid name" });
+        return;
     }
 
-    if (email == undefined) {
+    if ((password == undefined) || (password.trim() == "")) {
+        res.statusCode = 400;
+        res.json({ error: "Invalid password" });
+        return;
+    }
+
+    if ((email == undefined) || (email.trim() == "")) {
         res.statusCode = 400;
         res.json({ error: "Invalid e-mail" });
     } else {
@@ -24,26 +31,21 @@ router.post("/user", (req, res) => {
             if (userFound != undefined) {
                 res.statusCode = 400;
                 res.json({ error: "This e-mail is associated to another user" });
+            } else {
+                user.create({
+                    name: name,
+                    email: email,
+                    password: password
+                }).then(() => {
+                    res.status = 200;
+                    res.json({ msg: "Success!" });
+                }).catch((msgErro) => {
+                    res.status = 500;
+                    res.send(msgErro)
+                })
             }
         });
     }
-
-    if (password == undefined) {
-        res.statusCode = 400;
-        res.json({ error: "Invalid password" });
-    }
-
-    user.create({
-        name: name,
-        email: email,
-        password: password
-    }).then(() => {
-        res.status = 200;
-        res.redirect("/");
-    }).catch((msgErro) => {
-        res.status = 500;
-        res.send(msgErro)
-    })
 });
 
 router.post("/auth", (req, res) => {
