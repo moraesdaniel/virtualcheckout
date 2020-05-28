@@ -5,8 +5,36 @@ const movement = require("./Movement");
 const category = require("../category/Category");
 const checkout = require("../checkout/Checkout");
 
-router.get("/moves", (req, res) => {
-    res.send("Rota de movimentações");
+router.get("/movements", authentication, (req, res) => {
+    var userId = req.userId;
+    var checkoutId = req.body.checkoutId;
+
+    checkout.findOne({
+        where: {
+            id: checkoutId,
+            userId: userId
+        }
+    }).then(checkoutFound => {
+        if (checkoutFound == undefined) {
+            res.statusCode = 400;
+            res.json({ erro: "Invalid checkout" });
+        } else {
+            movement.findAll({
+                where: {
+                    checkoutId: checkoutId
+                },
+                order: [
+                    ["id", "DESC"]
+                ],
+                include: [
+                    { model: category }
+                ]
+            }).then((categories) => {
+                res.statusCode = 200;
+                res.json(categories);
+            });
+        }
+    });
 });
 
 router.post("/movement", authentication, (req, res) => {
@@ -99,30 +127,26 @@ router.delete("/movement", authentication, (req, res) => {
 
     checkout.findOne({
         where: {
-            id: checkoutId
+            id: checkoutId,
+            userId: userId
         }
     }).then((checkoutFound) => {
         if (checkoutFound == undefined) {
             res.statusCode = 400;
             res.json({ error: "Checkout not found" });
         } else {
-            if (checkoutFound.userId != userId) {
-                res.statusCode = 400;
-                res.json({ error: "This checkout does not belong to your user!" });
-            } else {
-                movement.destroy({
-                    where: {
-                        id: id,
-                        checkoutId: checkoutId
-                    }
-                }).then(() => {
-                    res.statusCode = 200;
-                    res.json({ msg: "Success!" });
-                }).catch((msgErro) => {
-                    res.statusCode = 500;
-                    res.json({ erro: msgErro });
-                });
-            }
+            movement.destroy({
+                where: {
+                    id: id,
+                    checkoutId: checkoutId
+                }
+            }).then(() => {
+                res.statusCode = 200;
+                res.json({ msg: "Success!" });
+            }).catch((msgErro) => {
+                res.statusCode = 500;
+                res.json({ erro: msgErro });
+            });
         }
     });
 });
