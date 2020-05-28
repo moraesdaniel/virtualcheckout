@@ -80,4 +80,51 @@ router.post("/movement", authentication, (req, res) => {
     }
 });
 
+router.delete("/movement", authentication, (req, res) => {
+    var userId = req.userId;
+    var id = req.body.id;
+    var checkoutId = req.body.checkoutId;
+
+    if ((id == undefined) || (isNaN(id))) {
+        res.statusCode = 400;
+        res.json({ erro: "Invalid id!" });
+        return;
+    }
+
+    if ((checkoutId == undefined) || (isNaN(checkoutId))) {
+        res.statusCode = 400;
+        res.json({ erro: "Invalid checkout id!" });
+        return;
+    }
+
+    checkout.findOne({
+        where: {
+            id: checkoutId
+        }
+    }).then((checkoutFound) => {
+        if (checkoutFound == undefined) {
+            res.statusCode = 400;
+            res.json({ error: "Checkout not found" });
+        } else {
+            if (checkoutFound.userId != userId) {
+                res.statusCode = 400;
+                res.json({ error: "This checkout does not belong to your user!" });
+            } else {
+                movement.destroy({
+                    where: {
+                        id: id,
+                        checkoutId: checkoutId
+                    }
+                }).then(() => {
+                    res.statusCode = 200;
+                    res.json({ msg: "Success!" });
+                }).catch((msgErro) => {
+                    res.statusCode = 500;
+                    res.json({ erro: msgErro });
+                });
+            }
+        }
+    });
+});
+
 module.exports = router;
