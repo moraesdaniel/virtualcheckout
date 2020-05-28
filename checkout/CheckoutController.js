@@ -3,8 +3,18 @@ const router = express.Router();
 const checkout = require("./Checkout");
 const authentication = require("../middleware/authentication");
 
-router.get("/checkouts", (req, res) => {
-    res.send("Rota de checkouts");
+router.get("/checkouts", authentication, (req, res) => {
+    var userId = req.userId;
+    checkout.findAll({
+        where: {
+            userId: userId
+        },
+        order: [
+            ["id", "ASC"]
+        ]
+    }).then(checkouts => {
+        res.json(checkouts);
+    });
 });
 
 

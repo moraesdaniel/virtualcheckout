@@ -3,8 +3,18 @@ const router = express.Router();
 const authentication = require("../middleware/authentication");
 const category = require("./Category");
 
-router.get("/categories", (req, res) => {
-    res.send("Rota de categorias");
+router.get("/categories", authentication, (req, res) => {
+    var userId = req.userId;
+    category.findAll({
+        where: {
+            userId: userId
+        },
+        order: [
+            ["id", "ASC"]
+        ]
+    }).then(categories => {
+        res.json(categories);
+    });
 });
 
 router.post("/category", authentication, (req, res) => {
