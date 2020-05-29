@@ -6,6 +6,10 @@ const checkout = connection.define("checkout", {
     description: {
         type: sequelize.STRING,
         allowNull: false
+    },
+    totalBalance: {
+        type: sequelize.FLOAT,
+        defaultValue: 0
     }
 });
 
