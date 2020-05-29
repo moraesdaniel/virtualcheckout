@@ -29,9 +29,9 @@ router.get("/movements", authentication, (req, res) => {
                 include: [
                     { model: category }
                 ]
-            }).then((categories) => {
+            }).then((movements) => {
                 res.statusCode = 200;
-                res.json(categories);
+                res.json(movements);
             });
         }
     });

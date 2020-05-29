@@ -14,6 +14,9 @@ router.get("/categories", authentication, (req, res) => {
         ]
     }).then(categories => {
         res.json(categories);
+    }).catch((msgError) => {
+        res.statusCode = 500;
+        res.json({ error: msgError });
     });
 });
 
