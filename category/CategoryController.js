@@ -18,7 +18,7 @@ function DescriptionIsValid(description) {
 
 function IdIsValid(id) {
     return new Promise((resolve, reject) => {
-        if (isNaN(id)) {
+        if ((id == undefined) || (isNaN(id))) {
             reject("Invalid id");
         } else {
             resolve("");
@@ -59,9 +59,9 @@ function CategoryBelongsUser(id, userId) {
             } else {
                 reject("Category not found!");
             }
-        }).catch((msgErro) => {
-            consol.log("Error: "+msgErro);
-            reject(msgErro);
+        }).catch((msgError) => {
+            console.log("Error: "+msgError);
+            reject(msgError);
         });
     });
 }
@@ -80,9 +80,6 @@ async function AddCategory(req, res) {
         }).then(() => {
             res.statusCode = 200;
             res.json({ msg: "Success!" });
-        }).catch((error) => {
-            res.statusCode = 500;
-            res.json({ error: error });
         });
     } catch (msgError) {
         res.statusCode = 400;
@@ -111,9 +108,6 @@ async function UpdateCategory(req, res) {
                 res.statusCode = 400;
                 res.json({ msg: "Category not found!" });
             }
-        }).catch((error) => {
-            res.statusCode = 500;
-            res.json({ error: error });
         });
     } catch (msgError) {
         res.statusCode = 400;
@@ -152,9 +146,6 @@ async function DeleteCategory(req, res) {
         }).then(() => {
             res.statusCode = 200;
             res.json({ msg: "Success!" });
-        }).catch((msgError) => {
-            res.statusCode = 500;
-            res.json({ error: msgError });
         });
     } catch (msgError) {
         res.statusCode = 400;
