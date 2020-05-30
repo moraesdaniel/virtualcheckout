@@ -6,52 +6,86 @@ const authentication = require("../middleware/authentication");
 
 const jwtTokenPrivate = "virtualcheckout2020";
 
-router.post("/user", (req, res) => {
-    var { name, email, password } = req.body;
-    
-    if ((name == undefined) || (name.trim() == "")){
-        res.statusCode = 400;
-        res.json({ error: "Invalid name" });
-        return;
-    }
+function NameIsValid(name) {
+    return new Promise((resolve, reject) => {
+        if ((name == undefined) || (name.trim() == "")) {
+            reject("Invalid name!");
+        }
 
-    if ((password == undefined) || (password.trim() == "")) {
-        res.statusCode = 400;
-        res.json({ error: "Invalid password" });
-        return;
-    }
+        resolve("");
+    });
+}
 
-    if ((email == undefined) || (email.trim() == "")) {
-        res.statusCode = 400;
-        res.json({ error: "Invalid e-mail" });
-    } else {
+function EmailIsValid(email) {
+    return new Promise((resolve, reject) => {
+        if ((email == undefined) || (email.trim() == "")) {
+            reject("Invalid e-mail!");
+        }
+
+        if (!email.includes("@")) {
+            reject("Invalid e-mail");
+        }
+
+        resolve("");
+    });
+}
+
+function PasswordIsValid(password) {
+    return new Promise((resolve, reject) => {
+        if ((password == undefined) || (password.trim() == "")) {
+            reject("Invalid password!");
+        }
+
+        resolve("");
+    });
+}
+
+function EmailAlreadyExists(email) {
+    return new Promise((resolve, reject) => {
         user.findOne({
             where: { email: email }
         }).then(userFound => {
             if (userFound != undefined) {
-                res.statusCode = 400;
-                res.json({ error: "This e-mail is associated to another user" });
+                reject("This e-mail is associated to another user");
             } else {
-                user.create({
-                    name: name,
-                    email: email,
-                    password: password
-                }).then(() => {
-                    res.status = 200;
-                    res.json({ msg: "Success!" });
-                }).catch((msgErro) => {
-                    res.status = 500;
-                    res.send(msgErro)
-                })
+                resolve("")
             }
+        }).catch((msgError) => {
+            reject(msgError);
         });
-    }
-});
+    });
+}
 
-router.post("/auth", (req, res) => {
+async function AddUser(req, res) {
+    var { name, email, password } = req.body;
+
+    try {
+        await NameIsValid(name);
+        await EmailIsValid(email);
+        await PasswordIsValid(password);
+        await EmailAlreadyExists(email);
+
+        user.create({
+            name: name,
+            email: email,
+            password: password
+        }).then(() => {
+            res.status = 200;
+            res.json({ msg: "Success!" });
+        });
+    } catch (msgError) {
+        res.statusCode = 400;
+        res.json({ error: msgError });
+    }
+}
+
+async function AuthenticateUser(req, res) {
     var { email, password } = req.body;
 
-    if (email != undefined) {
+    try {
+        await EmailIsValid(email);
+        await PasswordIsValid(password);
+
         user.findOne({
             where: { email: email }
         }).then(userFound => {
@@ -80,11 +114,20 @@ router.post("/auth", (req, res) => {
                 res.json({ error: "User not found" });
             }
         });
+    } catch (msgError) {
+        res.statusCode = 400;
+        res.json({ error: msgError });
     }
+}
+
+
+//Routes
+router.post("/user", (req, res) => {
+    AddUser(req, res);
 });
 
-router.get("/users", authentication, (req, res) => {
-    res.send("Rota de usuários" + " ID: "+ req.userId + " Email: " + req.userEmail);
+router.post("/auth", (req, res) => {
+    AuthenticateUser(req, res);
 });
 
 module.exports = router;
