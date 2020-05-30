@@ -5,6 +5,24 @@ const movement = require("./Movement");
 const category = require("../category/Category");
 const checkout = require("../checkout/Checkout");
 
+function ThereIsMovementsCategory(categoryId) {
+    return new Promise((resolve, reject) => {
+        movement.findOne({
+            where: {
+                categoryId: categoryId
+            }
+        }).then(movementFound => {
+            if (movementFound != undefined) {
+                reject("There is movements to this category!");
+            } else {
+                resolve("");
+            }
+        }).catch((msgError) => {
+            reject(msgError);
+        });
+    });
+}
+
 router.get("/movements", authentication, (req, res) => {
     var userId = req.userId;
     var checkoutId = req.body.checkoutId;
@@ -39,7 +57,7 @@ router.get("/movements", authentication, (req, res) => {
 
 router.post("/movement", authentication, (req, res) => {
     var userId = req.userId;
-    var { value, type, description, categoryId, checkoutId } = req.body;
+    var { value, type, description, categoryid, checkoutid } = req.body;
 
     if ((value == undefined) || (value <= 0)) {
         res.statusCode = 400;
@@ -65,7 +83,7 @@ router.post("/movement", authentication, (req, res) => {
     } else {
         category.findOne({
             where: {
-                id: categoryId,
+                id: categoryid,
                 userId: userId
             }
         }).then(categoryFound => {
@@ -79,7 +97,7 @@ router.post("/movement", authentication, (req, res) => {
                 } else {
                     checkout.findOne({
                         where: {
-                            id: checkoutId,
+                            id: checkoutid,
                             userId: userId
                         }
                     }).then(checkoutFound => {
@@ -91,8 +109,8 @@ router.post("/movement", authentication, (req, res) => {
                                 value: value,
                                 type: type,
                                 description: description,
-                                categoryId: categoryId,
-                                checkoutId: checkoutId
+                                categoryId: categoryid,
+                                checkoutId: checkoutid
                             }).then(() => {
                                 res.statusCode = 200;
                                 res.json({ msg: "Success!" });
@@ -151,4 +169,7 @@ router.delete("/movement", authentication, (req, res) => {
     });
 });
 
-module.exports = router;
+module.exports = {
+    router,
+    ThereIsMovementsCategory
+}

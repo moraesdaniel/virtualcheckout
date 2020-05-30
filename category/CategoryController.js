@@ -3,41 +3,77 @@ const router = express.Router();
 const authentication = require("../middleware/authentication");
 const category = require("./Category");
 const sequelize = require("sequelize");
+const movementController = require("../movement/MovementController");
 const { or, and, gt, lt, ne } = sequelize.Op;
 
-function ValidateCategory(description, userId, categoryId) {
+function DescriptionIsValid(description) {
     return new Promise((resolve, reject) => {
         if ((description == undefined) || (description.trim() == "")) {
-            reject("Invalid description!" );
+            reject("Invalid description!");
+        } else {
+            resolve("");
         }
+    });
+}
 
-        if (isNaN(categoryId)) {
-            reject("Invalid id!");
+function IdIsValid(id) {
+    return new Promise((resolve, reject) => {
+        if (isNaN(id)) {
+            reject("Invalid id");
+        } else {
+            resolve("");
         }
+    });
+}
 
+function CategoryAlreadExists(description, userId, id) {
+    return new Promise((resolve, reject) => {
         category.findOne({
             where: {
                 description: description.toUpperCase(),
                 userId: userId,
-                id: {[ne]: categoryId}
+                id: { [ne]: id }
             }
         }).then(categoryFound => {
             if (categoryFound != undefined) {
-                reject("Category already exists!");
+                reject("Category already exists! ID: " + categoryFound.id);
             } else {
-                resolve("Success!");
+                resolve("");
+            }
+        }).catch((msgError) => {
+            reject(msgError);
+        });
+    });
+}
+
+function CategoryBelongsUser(id, userId) {
+    return new Promise((resolve, reject) => {
+        category.findOne({
+            where: {
+                userId: userId,
+                id: id
+            }
+        }).then(categoryFound => {
+            if (categoryFound != undefined) {
+                resolve("");
+            } else {
+                reject("Category not found!");
             }
         }).catch((msgErro) => {
+            consol.log("Error: "+msgErro);
             reject(msgErro);
         });
     });
 }
 
-function AddCategory(req, res) {
+async function AddCategory(req, res) {
     var description = req.body.description;
     var userId = req.userId;
 
-    ValidateCategory(description, userId, 0).then(() => {
+    try {
+        await DescriptionIsValid(description);
+        await CategoryAlreadExists(description, userId, 0);
+
         category.create({
             description: description,
             userId: userId
@@ -48,17 +84,22 @@ function AddCategory(req, res) {
             res.statusCode = 500;
             res.json({ error: error });
         });
-    }).catch((msgError) => {
+    } catch (msgError) {
         res.statusCode = 400;
         res.json({ error: msgError });
-    });
+    }
 }
 
-function UpdateCategory(req, res) {
+async function UpdateCategory(req, res) {
     var userId = req.userId;
     var { description, id } = req.body;
 
-    ValidateCategory(description, userId, id).then(() => {
+    try {
+        await DescriptionIsValid(description);
+        await IdIsValid(id);
+        await CategoryBelongsUser(id, userId);
+        await CategoryAlreadExists(description, userId, id);
+
         category.update(
             { description: description.toUpperCase() },
             { where: { id: id } }
@@ -74,10 +115,10 @@ function UpdateCategory(req, res) {
             res.statusCode = 500;
             res.json({ error: error });
         });
-    }).catch((msgError) => {
+    } catch (msgError) {
         res.statusCode = 400;
         res.json({ error: msgError });
-    });
+    }
 }
 
 function GetCategories(req, res) {
@@ -97,8 +138,28 @@ function GetCategories(req, res) {
     }); 
 }
 
-function DeleteCategory(req, res) {
-    //Implementar amanhã ThereIsMovementsCategory
+async function DeleteCategory(req, res) {
+    var id = req.body.id;
+    var userId = req.userId;
+
+    try {
+        await IdIsValid(id);
+        await CategoryBelongsUser(id, userId);
+        await movementController.ThereIsMovementsCategory(id);
+
+        category.destroy({
+            where: { id: id }
+        }).then(() => {
+            res.statusCode = 200;
+            res.json({ msg: "Success!" });
+        }).catch((msgError) => {
+            res.statusCode = 500;
+            res.json({ error: msgError });
+        });
+    } catch (msgError) {
+        res.statusCode = 400;
+        res.json({ error: msgError });
+    }
 }
 
 //Routes
