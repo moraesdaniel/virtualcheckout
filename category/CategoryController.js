@@ -10,9 +10,9 @@ function DescriptionIsValid(description) {
     return new Promise((resolve, reject) => {
         if ((description == undefined) || (description.trim() == "")) {
             reject("Invalid description!");
-        } else {
-            resolve("");
         }
+
+        resolve("");
     });
 }
 
@@ -20,13 +20,13 @@ function IdIsValid(id) {
     return new Promise((resolve, reject) => {
         if ((id == undefined) || (isNaN(id))) {
             reject("Invalid id");
-        } else {
-            resolve("");
         }
+
+        resolve("");
     });
 }
 
-function CategoryAlreadExists(description, userId, id) {
+function CategoryAlreadyExists(description, userId, id) {
     return new Promise((resolve, reject) => {
         category.findOne({
             where: {
@@ -72,7 +72,7 @@ async function AddCategory(req, res) {
 
     try {
         await DescriptionIsValid(description);
-        await CategoryAlreadExists(description, userId, 0);
+        await CategoryAlreadyExists(description, userId, 0);
 
         category.create({
             description: description,
@@ -95,7 +95,7 @@ async function UpdateCategory(req, res) {
         await DescriptionIsValid(description);
         await IdIsValid(id);
         await CategoryBelongsUser(id, userId);
-        await CategoryAlreadExists(description, userId, id);
+        await CategoryAlreadyExists(description, userId, id);
 
         category.update(
             { description: description.toUpperCase() },

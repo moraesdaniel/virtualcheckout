@@ -28,9 +28,9 @@ function IdIsValid(id) {
     return new Promise((resolve, reject) => {
         if ((id == undefined) || (isNaN(id))) {
             reject("Invalid id!");
-        } else {
-            resolve("");
         }
+
+        resolve("");
     });
 }
 
@@ -38,13 +38,13 @@ function DescriptionIsValid(description) {
     return new Promise((resolve, reject) => {
         if ((description == undefined) || (description.trim() == "")) {
             reject("Invalid description!");
-        } else {
-            resolve("");
         }
+
+        resolve("");
     });
 }
 
-function CheckoutAlreadExists(description, userId, id) {
+function CheckoutAlreadyExists(description, userId, id) {
     return new Promise((resolve, reject) => {
         checkout.findOne({
             where: {
@@ -90,7 +90,7 @@ async function AddCheckout(req, res) {
         var userId = req.userId;
 
         await DescriptionIsValid(description);
-        await CheckoutAlreadExists(description, userId, 0);
+        await CheckoutAlreadyExists(description, userId, 0);
 
         checkout.create({
             description: description,
@@ -113,7 +113,7 @@ async function UpdateCheckout(req, res) {
         await DescriptionIsValid(description);
         await IdIsValid(id);
         await CheckoutBelongsUser(id, userId);
-        await CheckoutAlreadExists(description, userId, id);
+        await CheckoutAlreadyExists(description, userId, id);
 
         checkout.update(
             { description: description.toUpperCase() },
