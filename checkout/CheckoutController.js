@@ -2,8 +2,11 @@ const express = require("express");
 const router = express.Router();
 const checkout = require("./Checkout");
 const authentication = require("../middleware/authentication");
+const sequelize = require("sequelize");
+const movementController = require("../movement/MovementController");
+const { or, and, gt, lt, ne } = sequelize.Op;
 
-router.get("/checkouts", authentication, (req, res) => {
+function GetCheckouts(req, res) {
     var userId = req.userId;
     checkout.findAll({
         where: {
@@ -13,40 +16,160 @@ router.get("/checkouts", authentication, (req, res) => {
             ["id", "ASC"]
         ]
     }).then(checkouts => {
+        res.statusCode = 200;
         res.json(checkouts);
+    }).catch((msgError) => {
+        res.statusCode = 500;
+        res.json({ error: msgError });
     });
+}
+
+function IdIsValid(id) {
+    return new Promise((resolve, reject) => {
+        if ((id == undefined) || (isNaN(id))) {
+            reject("Invalid id!");
+        } else {
+            resolve("");
+        }
+    });
+}
+
+function DescriptionIsValid(description) {
+    return new Promise((resolve, reject) => {
+        if ((description == undefined) || (description.trim() == "")) {
+            reject("Invalid description!");
+        } else {
+            resolve("");
+        }
+    });
+}
+
+function CheckoutAlreadExists(description, userId, id) {
+    return new Promise((resolve, reject) => {
+        checkout.findOne({
+            where: {
+                description: description,
+                userId: userId,
+                id: { [ne]: id }
+            }
+        }).then(checkoutFound => {
+            if (checkoutFound != undefined) {
+                reject("Checkout already exists! ID: " + checkoutFound.id);
+            } else {
+                resolve("Success!");
+            }
+        }).catch((msgError) => {
+            reject(msgError);
+        });
+    });
+}
+
+function CheckoutBelongsUser(id, userId) {
+    return new Promise((resolve, reject) => {
+        checkout.findOne({
+            where: {
+                userId: userId,
+                id: id
+            }
+        }).then(checkoutFound => {
+            if (checkoutFound != undefined) {
+                resolve("");
+            } else {
+                reject("Checkout not found!");
+            }
+        }).catch((msgError) => {
+            console.log("Error: " + msgErro);
+            reject(msgError);
+        });
+    });
+}
+
+async function AddCheckout(req, res) {
+    try {
+        var description = req.body.description;
+        var userId = req.userId;
+
+        await DescriptionIsValid(description);
+        await CheckoutAlreadExists(description, userId, 0);
+
+        checkout.create({
+            description: description,
+            userId: userId
+        }).then(() => {
+            res.statusCode = 200;
+            res.json({ msg: "Success!" });
+        });
+    } catch (msgError) {
+        res.statusCode = 400;
+        res.json({ error: msgError });
+    }
+}
+
+async function UpdateCheckout(req, res) {
+    var userId = req.userId;
+    var { description, id } = req.body;
+
+    try {
+        await DescriptionIsValid(description);
+        await IdIsValid(id);
+        await CheckoutBelongsUser(id, userId);
+        await CheckoutAlreadExists(description, userId, id);
+
+        checkout.update(
+            { description: description.toUpperCase() },
+            { where: { id: id } }
+        ).then((rowsUpdated) => {
+            if (rowsUpdated != 0) {
+                res.statusCode = 200;
+                res.json({ msg: "Success!" });
+            } else {
+                res.statusCode = 400;
+                res.json({ msg: "Checkout not found!" });
+            }
+        });
+    } catch (msgError) {
+        res.statusCode = 400;
+        res.json({ error: msgError });
+    }
+}
+
+async function DeleteCheckout(req, res) {
+    var id = req.body.id;
+    var userId = req.userId;
+
+    try {
+        await IdIsValid(id);
+        await CheckoutBelongsUser(id, userId);
+        await movementController.ThereIsMovementsCheckout(id);
+
+        checkout.destroy({
+            where: { id: id }
+        }).then(() => {
+            res.statusCode = 200;
+            res.json({ msg: "Success!" });
+        });
+    } catch (msgError) {
+        res.statusCode = 400;
+        res.json({ error: msgError });
+    }
+}
+
+//Routes
+router.get("/checkouts", authentication, (req, res) => {
+    GetCheckouts(req, res);
 });
 
 
 router.post("/checkout", authentication, (req, res) => {
-    var description = req.body.description.toUpperCase();
-    var userId = req.userId;
+    AddCheckout(req, res);
+});
 
-    if ((description == undefined) || (description == "")) {
-        res.statusCode = 400;
-        res.json({ error: "Invalid description" });
-        return;
-    }
+router.put("/checkout", authentication, (req, res) => {
+    UpdateCheckout(req, res);
+});
 
-    checkout.findOne({
-        where: {
-            description: description,
-            userId: userId
-        }
-    }).then(checkoutFound => {
-        if (checkoutFound != undefined) {
-            res.statusCode = 400;
-            res.json({ error: "Checkout already exists!" });
-        } else {
-            checkout.create({
-                description: description,
-                userId: userId
-            }).then(() => {
-                res.statusCode = 200;
-                res.json({ msg: "Success!" });
-            });
-        }
-    });
+router.delete("/checkout", authentication, (req, res) => {
+    DeleteCheckout(req, res);
 });
 
 module.exports = router;

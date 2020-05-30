@@ -23,6 +23,24 @@ function ThereIsMovementsCategory(categoryId) {
     });
 }
 
+function ThereIsMovementsCheckout(checkoutId) {
+    return new Promise((resolve, reject) => {
+        movement.findOne({
+            where: {
+                checkoutId: checkoutId
+            }
+        }).then(movementFound => {
+            if (movementFound != undefined) {
+                reject("There is movements to this checkout!");
+            } else {
+                resolve("");
+            }
+        }).catch((msgError) => {
+            reject(msgError);
+        });
+    });
+}
+
 router.get("/movements", authentication, (req, res) => {
     var userId = req.userId;
     var checkoutId = req.body.checkoutId;
@@ -171,5 +189,6 @@ router.delete("/movement", authentication, (req, res) => {
 
 module.exports = {
     router,
-    ThereIsMovementsCategory
+    ThereIsMovementsCategory,
+    ThereIsMovementsCheckout
 }
