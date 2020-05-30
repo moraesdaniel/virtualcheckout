@@ -5,26 +5,7 @@ const category = require("./Category");
 const sequelize = require("sequelize");
 const movementController = require("../movement/MovementController");
 const { or, and, gt, lt, ne } = sequelize.Op;
-
-function DescriptionIsValid(description) {
-    return new Promise((resolve, reject) => {
-        if ((description == undefined) || (description.trim() == "")) {
-            reject("Invalid description!");
-        }
-
-        resolve("");
-    });
-}
-
-function IdIsValid(id) {
-    return new Promise((resolve, reject) => {
-        if ((id == undefined) || (isNaN(id))) {
-            reject("Invalid id");
-        }
-
-        resolve("");
-    });
-}
+const validations = require("../resources/Validations");
 
 function CategoryAlreadyExists(description, userId, id) {
     return new Promise((resolve, reject) => {
@@ -48,19 +29,22 @@ function CategoryAlreadyExists(description, userId, id) {
 
 function CategoryBelongsUser(id, userId) {
     return new Promise((resolve, reject) => {
+        console.log("#LOG Início");
         category.findOne({
             where: {
                 userId: userId,
                 id: id
             }
         }).then(categoryFound => {
+            console.log("#LOG Achou");
             if (categoryFound != undefined) {
                 resolve("");
             } else {
+                console.log("#LOG Não achou");
                 reject("Category not found!");
             }
         }).catch((msgError) => {
-            console.log("Error: "+msgError);
+            console.log("Error: " + msgError);
             reject(msgError);
         });
     });
@@ -71,7 +55,7 @@ async function AddCategory(req, res) {
     var userId = req.userId;
 
     try {
-        await DescriptionIsValid(description);
+        await validations.DescriptionIsValid(description, "Invalid description");
         await CategoryAlreadyExists(description, userId, 0);
 
         category.create({
@@ -92,8 +76,8 @@ async function UpdateCategory(req, res) {
     var { description, id } = req.body;
 
     try {
-        await DescriptionIsValid(description);
-        await IdIsValid(id);
+        await validations.DescriptionIsValid(description, "Invalid description");
+        await validations.IdIsValid(id, "Invalid id");
         await CategoryBelongsUser(id, userId);
         await CategoryAlreadyExists(description, userId, id);
 
@@ -137,7 +121,7 @@ async function DeleteCategory(req, res) {
     var userId = req.userId;
 
     try {
-        await IdIsValid(id);
+        await validations.IdIsValid(id, "Invalid id");
         await CategoryBelongsUser(id, userId);
         await movementController.ThereIsMovementsCategory(id);
 
@@ -171,4 +155,7 @@ router.delete("/category", authentication, (req, res) => {
     DeleteCategory(req, res);
 });
 
-module.exports = router;
+module.exports = {
+    router,
+    CategoryBelongsUser
+};

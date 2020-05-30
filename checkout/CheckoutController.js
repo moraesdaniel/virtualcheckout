@@ -5,6 +5,7 @@ const authentication = require("../middleware/authentication");
 const sequelize = require("sequelize");
 const movementController = require("../movement/MovementController");
 const { or, and, gt, lt, ne } = sequelize.Op;
+const validations = require("../resources/Validations");
 
 function GetCheckouts(req, res) {
     var userId = req.userId;
@@ -21,26 +22,6 @@ function GetCheckouts(req, res) {
     }).catch((msgError) => {
         res.statusCode = 500;
         res.json({ error: msgError });
-    });
-}
-
-function IdIsValid(id) {
-    return new Promise((resolve, reject) => {
-        if ((id == undefined) || (isNaN(id))) {
-            reject("Invalid id!");
-        }
-
-        resolve("");
-    });
-}
-
-function DescriptionIsValid(description) {
-    return new Promise((resolve, reject) => {
-        if ((description == undefined) || (description.trim() == "")) {
-            reject("Invalid description!");
-        }
-
-        resolve("");
     });
 }
 
@@ -89,7 +70,7 @@ async function AddCheckout(req, res) {
         var description = req.body.description;
         var userId = req.userId;
 
-        await DescriptionIsValid(description);
+        await validations.DescriptionIsValid(description, "Invalid description!");
         await CheckoutAlreadyExists(description, userId, 0);
 
         checkout.create({
@@ -110,8 +91,8 @@ async function UpdateCheckout(req, res) {
     var { description, id } = req.body;
 
     try {
-        await DescriptionIsValid(description);
-        await IdIsValid(id);
+        await validations.DescriptionIsValid(description, "Invalid description!");
+        await validations.IdIsValid(id, "Invalid id!");
         await CheckoutBelongsUser(id, userId);
         await CheckoutAlreadyExists(description, userId, id);
 
@@ -138,7 +119,7 @@ async function DeleteCheckout(req, res) {
     var userId = req.userId;
 
     try {
-        await IdIsValid(id);
+        await validations.IdIsValid(id, "Invalid id!");
         await CheckoutBelongsUser(id, userId);
         await movementController.ThereIsMovementsCheckout(id);
 
@@ -172,4 +153,7 @@ router.delete("/checkout", authentication, (req, res) => {
     DeleteCheckout(req, res);
 });
 
-module.exports = router;
+module.exports = {
+    router,
+    CheckoutBelongsUser
+};

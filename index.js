@@ -24,8 +24,8 @@ apiCaixaVirtual.use(bodyParser.urlencoded({ extended: false }));
 apiCaixaVirtual.use(bodyParser.json());
 
 //Using routes
-apiCaixaVirtual.use("/", categoryController);
-apiCaixaVirtual.use("/", checkoutController);
+apiCaixaVirtual.use("/", categoryController.router);
+apiCaixaVirtual.use("/", checkoutController.router);
 apiCaixaVirtual.use("/", movementController.router);
 apiCaixaVirtual.use("/", userController);
 

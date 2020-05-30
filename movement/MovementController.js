@@ -3,7 +3,9 @@ const router = express.Router();
 const authentication = require("../middleware/authentication");
 const movement = require("./Movement");
 const category = require("../category/Category");
-const checkout = require("../checkout/Checkout");
+const validations = require("../resources/Validations");
+const checkoutController = require("../checkout/CheckoutController");
+const categoryController = require("../category/CategoryController");
 
 function ThereIsMovementsCategory(categoryId) {
     return new Promise((resolve, reject) => {
@@ -41,150 +43,118 @@ function ThereIsMovementsCheckout(checkoutId) {
     });
 }
 
-router.get("/movements", authentication, (req, res) => {
+function ValueIsValid(value) {
+    return new Promise((resolve, reject) => {
+        if ((value == undefined) || (value <= 0)) {
+            reject("The value must be bigger than zero!");
+        }
+
+        resolve("");
+    })
+}
+
+function TypeIsValid(type) {
+    return new Promise((resolve, reject) => {
+        if ((type == undefined) || (!(type.toUpperCase() in { I: "Input", O: "Output" }))) {
+            reject("The value 'type' must be equal 'I'(input) or 'O'(output)");
+        }
+
+        resolve("");
+    });
+}
+
+async function AddMovement(req, res) {
+    var userId = req.userId;
+    var { value, type, description, categoryId, checkoutId } = req.body;
+
+    try {
+        await ValueIsValid(value);
+        await TypeIsValid(type);
+        await validations.DescriptionIsValid(description, "Invalid description!");
+        await validations.IdIsValid(categoryId, "Invalid category id!");
+        await categoryController.CategoryBelongsUser(categoryId, userId); //O problema está aqui
+        await validations.IdIsValid(checkoutId, "Invalid checkout id!");
+        await checkoutController.CheckoutBelongsUser(checkoutId, userId);
+
+        movement.create({
+            value: value,
+            type: type,
+            description: description,
+            categoryId: categoryId,
+            checkoutId: checkoutId
+        }).then(() => {
+            res.statusCode = 200;
+            res.json({ msg: "Success!" });
+        });
+    } catch (msgError) {
+        res.statusCode = 400;
+        res.json({ error: msgError });
+    }
+}
+
+async function DeleteMovement(req, res) {
+    var userId = req.userId;
+    var { checkoutId, id } = req.body;
+
+    try {
+        await validations.IdIsValid(id, "Invalid id!");
+        await validations.IdIsValid(checkoutId, "Invalid checkout id!");
+        await checkoutController.CheckoutBelongsUser(checkoutId, userId);
+
+        movement.destroy({
+            where: {
+                id: id,
+                checkoutId: checkoutId
+            }
+        }).then(() => {
+            res.statusCode = 200;
+            res.json({ msg: "Success!" });
+        });
+    } catch (msgError) {
+        res.statusCode = 400;
+        res.json({ error: msgError });
+    }
+}
+
+
+async function GetMovements(req, res) {
     var userId = req.userId;
     var checkoutId = req.body.checkoutId;
 
-    checkout.findOne({
-        where: {
-            id: checkoutId,
-            userId: userId
-        }
-    }).then(checkoutFound => {
-        if (checkoutFound == undefined) {
-            res.statusCode = 400;
-            res.json({ erro: "Invalid checkout" });
-        } else {
-            movement.findAll({
-                where: {
-                    checkoutId: checkoutId
-                },
-                order: [
-                    ["id", "DESC"]
-                ],
-                include: [
-                    { model: category }
-                ]
-            }).then((movements) => {
-                res.statusCode = 200;
-                res.json(movements);
-            });
-        }
-    });
-});
+    try {
+        await checkoutController.CheckoutBelongsUser(checkoutId, userId);
 
-router.post("/movement", authentication, (req, res) => {
-    var userId = req.userId;
-    var { value, type, description, categoryid, checkoutid } = req.body;
-
-    if ((value == undefined) || (value <= 0)) {
-        res.statusCode = 400;
-        res.json({ error: "The value must be bigger than zero!" });
-        return;
-    }
-
-    if ((type == undefined) || (!(type.toUpperCase() in { I: "Input", O: "Output"}))) {
-        res.statusCode = 400;
-        res.json({ error: "The value 'type' must be equal 'I'(input) or 'O'(output)" });
-        return;
-    }
-
-    if ((description == undefined) || (description == "")) {
-        res.statusCode = 400;
-        res.json({ error: "Invalid description!" });
-        return;
-    }
-
-    if (category == undefined) {
-        res.statusCode = 400;
-        res.json({ error: "Invalid category!" });
-    } else {
-        category.findOne({
+        movement.findAll({
             where: {
-                id: categoryid,
-                userId: userId
-            }
-        }).then(categoryFound => {
-            if (categoryFound == undefined) {
-                res.statusCode = 400;
-                res.json({ erro: "Invalid category" });
-            } else {
-                if (checkout == undefined) {
-                    res.statusCode = 400;
-                    res.json({ error: "Invalid checkout" });
-                } else {
-                    checkout.findOne({
-                        where: {
-                            id: checkoutid,
-                            userId: userId
-                        }
-                    }).then(checkoutFound => {
-                        if (checkoutFound == undefined) {
-                            res.statusCode = 400;
-                            res.json({ erro: "Invalid checkout" });
-                        } else {
-                            movement.create({
-                                value: value,
-                                type: type,
-                                description: description,
-                                categoryId: categoryid,
-                                checkoutId: checkoutid
-                            }).then(() => {
-                                res.statusCode = 200;
-                                res.json({ msg: "Success!" });
-                            }).catch((msgErro) => {
-                                res.statusCode = 500;
-                                res.json({ erro: msgErro});
-                            });
-                        }
-                    });
-                }
-            }
+                checkoutId: checkoutId
+            },
+            order: [
+                ["id", "DESC"]
+            ],
+            include: [
+                { model: category }
+            ]
+        }).then((movements) => {
+            res.statusCode = 200;
+            res.json(movements);
         });
+    } catch (msgError) {
+        res.statusCode = 400;
+        res.json({ error: msgError });
     }
+}
+
+//Routes
+router.post("/movement", authentication, (req, res) => {
+    AddMovement(req, res);
 });
 
 router.delete("/movement", authentication, (req, res) => {
-    var userId = req.userId;
-    var id = req.body.id;
-    var checkoutId = req.body.checkoutId;
+    DeleteMovement(req, res);
+});
 
-    if ((id == undefined) || (isNaN(id))) {
-        res.statusCode = 400;
-        res.json({ erro: "Invalid id!" });
-        return;
-    }
-
-    if ((checkoutId == undefined) || (isNaN(checkoutId))) {
-        res.statusCode = 400;
-        res.json({ erro: "Invalid checkout id!" });
-        return;
-    }
-
-    checkout.findOne({
-        where: {
-            id: checkoutId,
-            userId: userId
-        }
-    }).then((checkoutFound) => {
-        if (checkoutFound == undefined) {
-            res.statusCode = 400;
-            res.json({ error: "Checkout not found" });
-        } else {
-            movement.destroy({
-                where: {
-                    id: id,
-                    checkoutId: checkoutId
-                }
-            }).then(() => {
-                res.statusCode = 200;
-                res.json({ msg: "Success!" });
-            }).catch((msgErro) => {
-                res.statusCode = 500;
-                res.json({ erro: msgErro });
-            });
-        }
-    });
+router.get("/movements", authentication, (req, res) => {
+    GetMovements(req, res);
 });
 
 module.exports = {
