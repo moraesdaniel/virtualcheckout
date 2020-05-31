@@ -3,9 +3,27 @@ const router = express.Router();
 const authentication = require("../middleware/authentication");
 const category = require("./Category");
 const sequelize = require("sequelize");
-const movementController = require("../movement/MovementController");
 const { or, and, gt, lt, ne } = sequelize.Op;
 const validations = require("../resources/Validations");
+const movement = require("../movement/Movement");
+
+function ThereIsMovementsCategory(categoryId) {
+    return new Promise((resolve, reject) => {
+        movement.findOne({
+            where: {
+                categoryId: categoryId
+            }
+        }).then(movementFound => {
+            if (movementFound != undefined) {
+                reject("There is movements to this category!");
+            } else {
+                resolve("");
+            }
+        }).catch((msgError) => {
+            reject(msgError);
+        });
+    });
+}
 
 function CategoryAlreadyExists(description, userId, id) {
     return new Promise((resolve, reject) => {
@@ -120,7 +138,7 @@ async function DeleteCategory(req, res) {
     try {
         await validations.IdIsValid(id, "Invalid id");
         await CategoryBelongsUser(id, userId);
-        await movementController.ThereIsMovementsCategory(id);
+        await ThereIsMovementsCategory(id);
 
         category.destroy({
             where: { id: id }
