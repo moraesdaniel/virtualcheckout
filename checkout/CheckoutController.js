@@ -3,9 +3,27 @@ const router = express.Router();
 const checkout = require("./Checkout");
 const authentication = require("../middleware/authentication");
 const sequelize = require("sequelize");
-const movementController = require("../movement/MovementController");
 const { or, and, gt, lt, ne } = sequelize.Op;
 const validations = require("../resources/Validations");
+const movement = require("../movement/Movement");
+
+function ThereIsMovementsCheckout(checkoutId) {
+    return new Promise((resolve, reject) => {
+        movement.findOne({
+            where: {
+                checkoutId: checkoutId
+            }
+        }).then(movementFound => {
+            if (movementFound != undefined) {
+                reject("There is movements to this checkout!");
+            } else {
+                resolve("");
+            }
+        }).catch((msgError) => {
+            reject(msgError);
+        });
+    });
+}
 
 function GetCheckouts(req, res) {
     var userId = req.userId;
@@ -121,7 +139,7 @@ async function DeleteCheckout(req, res) {
     try {
         await validations.IdIsValid(id, "Invalid id!");
         await CheckoutBelongsUser(id, userId);
-        await movementController.ThereIsMovementsCheckout(id);
+        await ThereIsMovementsCheckout(id);
 
         checkout.destroy({
             where: { id: id }
