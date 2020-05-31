@@ -29,18 +29,15 @@ function CategoryAlreadyExists(description, userId, id) {
 
 function CategoryBelongsUser(id, userId) {
     return new Promise((resolve, reject) => {
-        console.log("#LOG Início");
         category.findOne({
             where: {
                 userId: userId,
                 id: id
             }
-        }).then(categoryFound => {
-            console.log("#LOG Achou");
+        }).then((categoryFound) => {
             if (categoryFound != undefined) {
                 resolve("");
             } else {
-                console.log("#LOG Não achou");
                 reject("Category not found!");
             }
         }).catch((msgError) => {
