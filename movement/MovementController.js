@@ -7,42 +7,6 @@ const validations = require("../resources/Validations");
 const checkoutController = require("../checkout/CheckoutController");
 const categoryController = require("../category/CategoryController");
 
-function ThereIsMovementsCategory(categoryId) {
-    return new Promise((resolve, reject) => {
-        movement.findOne({
-            where: {
-                categoryId: categoryId
-            }
-        }).then(movementFound => {
-            if (movementFound != undefined) {
-                reject("There is movements to this category!");
-            } else {
-                resolve("");
-            }
-        }).catch((msgError) => {
-            reject(msgError);
-        });
-    });
-}
-
-function ThereIsMovementsCheckout(checkoutId) {
-    return new Promise((resolve, reject) => {
-        movement.findOne({
-            where: {
-                checkoutId: checkoutId
-            }
-        }).then(movementFound => {
-            if (movementFound != undefined) {
-                reject("There is movements to this checkout!");
-            } else {
-                resolve("");
-            }
-        }).catch((msgError) => {
-            reject(msgError);
-        });
-    });
-}
-
 function ValueIsValid(value) {
     return new Promise((resolve, reject) => {
         if ((value == undefined) || (value <= 0)) {
@@ -71,8 +35,10 @@ async function AddMovement(req, res) {
         await ValueIsValid(value);
         await TypeIsValid(type);
         await validations.DescriptionIsValid(description, "Invalid description!");
+
         await validations.IdIsValid(categoryId, "Invalid category id!");
-        await categoryController.CategoryBelongsUser(categoryId, userId); //O problema está aqui
+        await categoryController.CategoryBelongsUser(categoryId, userId);
+
         await validations.IdIsValid(checkoutId, "Invalid checkout id!");
         await checkoutController.CheckoutBelongsUser(checkoutId, userId);
 
@@ -106,9 +72,14 @@ async function DeleteMovement(req, res) {
                 id: id,
                 checkoutId: checkoutId
             }
-        }).then(() => {
-            res.statusCode = 200;
-            res.json({ msg: "Success!" });
+        }).then((deletedRows) => {
+            if (deletedRows > 0) {
+                res.statusCode = 200;
+                res.json({ msg: "Success!" });
+            } else {
+                res.statusCode = 400;
+                res.json({ error: "Movement not found" });
+            }
         });
     } catch (msgError) {
         res.statusCode = 400;
@@ -157,8 +128,4 @@ router.get("/movements", authentication, (req, res) => {
     GetMovements(req, res);
 });
 
-module.exports = {
-    router,
-    ThereIsMovementsCategory,
-    ThereIsMovementsCheckout
-}
+module.exports = router;
