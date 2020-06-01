@@ -2,19 +2,9 @@ const express = require("express");
 const router = express.Router();
 const user = require("./User");
 const jwt = require("jsonwebtoken");
-const authentication = require("../middleware/authentication");
+const validations = require("../resources/Validations.js");
 
 const jwtTokenPrivate = "virtualcheckout2020";
-
-function NameIsValid(name) {
-    return new Promise((resolve, reject) => {
-        if ((name == undefined) || (name.trim() == "")) {
-            reject("Invalid name!");
-        }
-
-        resolve("");
-    });
-}
 
 function EmailIsValid(email) {
     return new Promise((resolve, reject) => {
@@ -24,16 +14,6 @@ function EmailIsValid(email) {
 
         if (!email.includes("@")) {
             reject("Invalid e-mail");
-        }
-
-        resolve("");
-    });
-}
-
-function PasswordIsValid(password) {
-    return new Promise((resolve, reject) => {
-        if ((password == undefined) || (password.trim() == "")) {
-            reject("Invalid password!");
         }
 
         resolve("");
@@ -51,6 +31,7 @@ function EmailAlreadyExists(email) {
                 resolve("")
             }
         }).catch((msgError) => {
+            console.log("Error: " + msgError);
             reject(msgError);
         });
     });
@@ -60,9 +41,9 @@ async function AddUser(req, res) {
     var { name, email, password } = req.body;
 
     try {
-        await NameIsValid(name);
+        await validations.DescriptionIsValid(name, "Invalid name");
         await EmailIsValid(email);
-        await PasswordIsValid(password);
+        await validations.DescriptionIsValid(password, "Invalid password");
         await EmailAlreadyExists(email);
 
         user.create({
@@ -74,6 +55,7 @@ async function AddUser(req, res) {
             res.json({ msg: "Success!" });
         });
     } catch (msgError) {
+        console.log("Error: " + msgError);
         res.statusCode = 400;
         res.json({ error: msgError });
     }
@@ -84,7 +66,7 @@ async function AuthenticateUser(req, res) {
 
     try {
         await EmailIsValid(email);
-        await PasswordIsValid(password);
+        await validations.DescriptionIsValid(password, "Invalid password");
 
         user.findOne({
             where: { email: email }
@@ -115,6 +97,7 @@ async function AuthenticateUser(req, res) {
             }
         });
     } catch (msgError) {
+        console.log("Error: " + msgError);
         res.statusCode = 400;
         res.json({ error: msgError });
     }
