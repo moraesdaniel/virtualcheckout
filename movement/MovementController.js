@@ -27,7 +27,23 @@ function TypeIsValid(type) {
     });
 }
 
-async function AddMovement(req, res) {
+function AddMovement(newMovement) {
+    return new Promise((resolve, reject) => {
+        movement.create({
+            value: newMovement.value,
+            type: newMovement.type,
+            description: newMovement.description,
+            categoryId: newMovement.categoryId,
+            checkoutId: newMovement.checkoutId
+        }).then(() => {
+            resolve("");
+        }).catch((msgError) => {
+            reject(msgError);
+        });
+    });
+}
+
+async function Add(req, res) {
     var userId = req.userId;
     var { value, type, description, categoryId, checkoutId } = req.body;
 
@@ -42,15 +58,17 @@ async function AddMovement(req, res) {
         await validations.IdIsValid(checkoutId, "Invalid checkout id!");
         await checkoutController.CheckoutBelongsUser(checkoutId, userId);
 
-        movement.create({
+        await AddMovement({
             value: value,
             type: type,
             description: description,
             categoryId: categoryId,
             checkoutId: checkoutId
-        }).then(() => {
+        });
+
+        checkoutController.UpdateTotalBalance(checkoutId, value, type).then(() => {
             res.statusCode = 200;
-            res.json({ msg: "Success!" });
+            res.json({ msg: "Success" });
         });
     } catch (msgError) {
         console.log("Error: " + msgError);
@@ -59,15 +77,8 @@ async function AddMovement(req, res) {
     }
 }
 
-async function DeleteMovement(req, res) {
-    var userId = req.userId;
-    var { checkoutId, id } = req.body;
-
-    try {
-        await validations.IdIsValid(id, "Invalid id!");
-        await validations.IdIsValid(checkoutId, "Invalid checkout id!");
-        await checkoutController.CheckoutBelongsUser(checkoutId, userId);
-
+function DeleteMovement(id, checkoutId) {
+    return new Promise((resolve, reject) => {
         movement.destroy({
             where: {
                 id: id,
@@ -75,13 +86,39 @@ async function DeleteMovement(req, res) {
             }
         }).then((deletedRows) => {
             if (deletedRows > 0) {
-                res.statusCode = 200;
-                res.json({ msg: "Success!" });
+                resolve("");
             } else {
-                res.statusCode = 400;
-                res.json({ error: "Movement not found" });
+                reject("Movement not found" );
             }
+        }).catch((msgError) => {
+            reject(msgError);
         });
+    });
+}
+
+async function Delete(req, res) {
+    var userId = req.userId;
+    var { checkoutId, id } = req.body;
+    var msgReturn = "";
+
+    try {
+        await validations.IdIsValid(id, "Invalid id!");
+        await validations.IdIsValid(checkoutId, "Invalid checkout id!");
+        await checkoutController.CheckoutBelongsUser(checkoutId, userId);
+
+        var movementDeleted = await GetMovement(id, checkoutId);
+
+        msgReturn = await DeleteMovement(id, checkoutId);
+
+        if (msgReturn != "") {
+            res.statusCode = 500;
+            res.json({ error: msgReturn });
+        } else {
+            checkoutController.UpdateTotalBalance(checkoutId, (movementDeleted.value * -1), movementDeleted.type).then(() => {
+                res.statusCode = 200;
+                res.json({ msg: "Success" });
+            });
+        }
     } catch (msgError) {
         console.log("Error: " + msgError);
         res.statusCode = 400;
@@ -118,6 +155,22 @@ function FormatMovements(checkout, movements) {
     }
 
     return fileReturn;
+}
+
+function GetMovement(id, checkoutId) {
+    return new Promise((resolve, reject) => {
+        movement.findOne({
+            where: {
+                id: id,
+                checkoutId: checkoutId
+            }
+        }).then((movementFound) => {
+            resolve(movementFound);
+        }).catch((msgError) => {
+            console.log("Error: " + msgError);
+            reject(msgError);
+        });
+    });
 }
 
 function GetMovementsCheckout(checkoutId) {
@@ -167,11 +220,11 @@ async function GetMovements(req, res) {
 
 //Routes
 router.post("/movement", authentication, (req, res) => {
-    AddMovement(req, res);
+    Add(req, res);
 });
 
 router.delete("/movement", authentication, (req, res) => {
-    DeleteMovement(req, res);
+    Delete(req, res);
 });
 
 router.get("/movements", authentication, (req, res) => {
