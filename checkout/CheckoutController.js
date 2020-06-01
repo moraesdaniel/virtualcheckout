@@ -86,7 +86,7 @@ function CheckoutBelongsUser(id, userId) {
     });
 }
 
-async function AddCheckout(req, res) {
+async function Add(req, res) {
     try {
         var description = req.body.description;
         var userId = req.userId;
@@ -108,27 +108,64 @@ async function AddCheckout(req, res) {
     }
 }
 
-async function UpdateCheckout(req, res) {
+function UpdateCheckout(id, description) {
+    return new Promise((resolve, reject) => {
+        checkout.update(
+            { description: description },
+            { where: { id: id } }
+        ).then((rowsUpdated) => {
+            if (rowsUpdated != 0) {
+                resolve("Success");
+            } else {
+                reject("Checkout not found!" );
+            }
+        }).catch((msgError) => {
+            reject(msgError);
+        });
+    });
+}
+
+function UpdateTotalBalance(id, movementValue, movementType) {
+    return new Promise((resolve, reject) => {
+        GetCheckout(id).then((checkout) => {
+            var totalBalance = 0;
+            if (movementType.toUpperCase() == "I") {
+                totalBalance = checkout.totalBalance + movementValue;
+            } else {
+                totalBalance = checkout.totalBalance - movementValue;
+            }
+
+            checkout.update(
+                { totalBalance: totalBalance },
+                { where: { id: id } }
+            ).then((rowsUpdated) => {
+                if (rowsUpdated != 0) {
+                    resolve("Success");
+                } else {
+                    reject("Checkout not found!");
+                }
+            }).catch((msgError) => {
+                reject(msgError);
+            });
+        }).catch((msgError) => {
+            reject(msgError);
+        });
+    });
+}
+
+async function Update(req, res) {
     var userId = req.userId;
     var { description, id } = req.body;
 
     try {
-        await validations.DescriptionIsValid(description, "Invalid description!");
         await validations.IdIsValid(id, "Invalid id!");
         await CheckoutBelongsUser(id, userId);
+        await validations.DescriptionIsValid(description, "Invalid description!");
         await CheckoutAlreadyExists(description, userId, id);
 
-        checkout.update(
-            { description: description.toUpperCase() },
-            { where: { id: id } }
-        ).then((rowsUpdated) => {
-            if (rowsUpdated != 0) {
-                res.statusCode = 200;
-                res.json({ msg: "Success!" });
-            } else {
-                res.statusCode = 400;
-                res.json({ msg: "Checkout not found!" });
-            }
+        UpdateCheckout(id, description).then(() => {
+            res.statusCode = 200;
+            res.json({ msg: "Success" });
         });
     } catch (msgError) {
         console.log("Error: " + msgError);
@@ -137,7 +174,7 @@ async function UpdateCheckout(req, res) {
     }
 }
 
-async function DeleteCheckout(req, res) {
+async function Delete(req, res) {
     var id = req.body.id;
     var userId = req.userId;
 
@@ -181,19 +218,20 @@ router.get("/checkouts", authentication, (req, res) => {
 
 
 router.post("/checkout", authentication, (req, res) => {
-    AddCheckout(req, res);
+    Add(req, res);
 });
 
 router.put("/checkout", authentication, (req, res) => {
-    UpdateCheckout(req, res);
+    Update(req, res);
 });
 
 router.delete("/checkout", authentication, (req, res) => {
-    DeleteCheckout(req, res);
+    Delete(req, res);
 });
 
 module.exports = {
     router,
     CheckoutBelongsUser,
-    GetCheckout
+    GetCheckout,
+    UpdateTotalBalance
 };
