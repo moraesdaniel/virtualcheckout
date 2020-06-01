@@ -129,7 +129,7 @@ async function Delete(req, res) {
 
 function FormatMovements(checkout, movements) {
     var fileReturn = JSON.parse("{}");
-    var movement = JSON.parse("{}");
+    var movementObj = "";
     var iterator = 0;
 
     fileReturn.checkoutId = checkout.id;
@@ -140,18 +140,16 @@ function FormatMovements(checkout, movements) {
     for (iterator = 0; iterator < movements.length; iterator++) {
         let data = new Date(movements[iterator].createdAt);
 
-        let categoryObj = JSON.parse("{}");
-        categoryObj.id = movements[iterator].category.id;
-        categoryObj.name = movements[iterator].category.description;
-
-        movement.data = data.toLocaleDateString();
-        movement.id = movements[iterator].id;
-        movement.categoria = categoryObj;
-        movement.tipo = movements[iterator].type;
-        movement.valor = movements[iterator].value;
-        movement.descricao = movements[iterator].description;
-
-        fileReturn.movimentacoes.push(movement);
+        movementObj = '{ ';
+        movementObj += `"data": "${data.toLocaleDateString()}",`;
+        movementObj += `"id": ${movements[iterator].id},`;
+        movementObj += `"categoria": { "id": ${movements[iterator].category.id}, "name":"${movements[iterator].category.description}"},`;
+        movementObj += `"tipo": "${movements[iterator].type}",`;
+        movementObj += `"valor": ${movements[iterator].value},`;
+        movementObj += `"descricao": "${movements[iterator].description}" `;
+        movementObj += `}`;
+        
+        fileReturn.movimentacoes.push(JSON.parse(movementObj));
     }
 
     return fileReturn;
