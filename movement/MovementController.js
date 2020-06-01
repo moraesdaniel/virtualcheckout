@@ -53,6 +53,7 @@ async function AddMovement(req, res) {
             res.json({ msg: "Success!" });
         });
     } catch (msgError) {
+        console.log("Error: " + msgError);
         res.statusCode = 400;
         res.json({ error: msgError });
     }
@@ -82,19 +83,45 @@ async function DeleteMovement(req, res) {
             }
         });
     } catch (msgError) {
+        console.log("Error: " + msgError);
         res.statusCode = 400;
         res.json({ error: msgError });
     }
 }
 
 
-async function GetMovements(req, res) {
-    var userId = req.userId;
-    var checkoutId = req.body.checkoutId;
+function FormatMovements(checkout, movements) {
+    var fileReturn = JSON.parse("{}");
+    var movement = JSON.parse("{}");
+    var iterator = 0;
 
-    try {
-        await checkoutController.CheckoutBelongsUser(checkoutId, userId);
+    fileReturn.checkoutId = checkout.id;
+    fileReturn.descricao = checkout.description;
+    fileReturn.saldoTotal = checkout.totalBalance;
 
+    fileReturn.movimentacoes = [];
+    for (iterator = 0; iterator < movements.length; iterator++) {
+        let data = new Date(movements[iterator].createdAt);
+
+        let categoryObj = JSON.parse("{}");
+        categoryObj.id = movements[iterator].category.id;
+        categoryObj.name = movements[iterator].category.description;
+
+        movement.data = data.toLocaleDateString();
+        movement.id = movements[iterator].id;
+        movement.categoria = categoryObj;
+        movement.tipo = movements[iterator].type;
+        movement.valor = movements[iterator].value;
+        movement.descricao = movements[iterator].description;
+
+        fileReturn.movimentacoes.push(movement);
+    }
+
+    return fileReturn;
+}
+
+function GetMovementsCheckout(checkoutId) {
+    return new Promise((resolve, reject) => {
         movement.findAll({
             where: {
                 checkoutId: checkoutId
@@ -106,10 +133,33 @@ async function GetMovements(req, res) {
                 { model: category }
             ]
         }).then((movements) => {
-            res.statusCode = 200;
-            res.json(movements);
+            resolve(movements);
+        }).catch((msgError) => {
+            console.log("Error: " + msgError);
+            reject(undefined);
         });
+    });
+}
+
+async function GetMovements(req, res) {
+    var userId = req.userId;
+    var checkoutId = req.body.checkoutId;
+
+    try {
+        await validations.IdIsValid(checkoutId, "Invalid checkout id");
+        await checkoutController.CheckoutBelongsUser(checkoutId, userId);
+        var checkout = await checkoutController.GetCheckout(checkoutId); 
+        var movements = await GetMovementsCheckout(checkoutId);
+
+        if ((checkout != undefined) || (movements != undefined)) {
+            res.statusCode = 200;
+            res.json(FormatMovements(checkout, movements));
+        } else {
+            res.statusCode = 404;
+            res.json({ error: "Data not found" });
+        }
     } catch (msgError) {
+        console.log("Error: " + msgError);
         res.statusCode = 400;
         res.json({ error: msgError });
     }

@@ -20,6 +20,7 @@ function ThereIsMovementsCheckout(checkoutId) {
                 resolve("");
             }
         }).catch((msgError) => {
+            console.log("Error: " + msgError);
             reject(msgError);
         });
     });
@@ -38,6 +39,7 @@ function GetCheckouts(req, res) {
         res.statusCode = 200;
         res.json(checkouts);
     }).catch((msgError) => {
+        console.log("Error: " + msgError);
         res.statusCode = 500;
         res.json({ error: msgError });
     });
@@ -58,6 +60,7 @@ function CheckoutAlreadyExists(description, userId, id) {
                 resolve("Success!");
             }
         }).catch((msgError) => {
+            console.log("Error: " + msgError);
             reject(msgError);
         });
     });
@@ -77,7 +80,7 @@ function CheckoutBelongsUser(id, userId) {
                 reject("Checkout not found!");
             }
         }).catch((msgError) => {
-            console.log("Error: " + msgErro);
+            console.log("Error: " + msgError);
             reject(msgError);
         });
     });
@@ -99,6 +102,7 @@ async function AddCheckout(req, res) {
             res.json({ msg: "Success!" });
         });
     } catch (msgError) {
+        console.log("Error: " + msgError);
         res.statusCode = 400;
         res.json({ error: msgError });
     }
@@ -127,6 +131,7 @@ async function UpdateCheckout(req, res) {
             }
         });
     } catch (msgError) {
+        console.log("Error: " + msgError);
         res.statusCode = 400;
         res.json({ error: msgError });
     }
@@ -148,9 +153,25 @@ async function DeleteCheckout(req, res) {
             res.json({ msg: "Success!" });
         });
     } catch (msgError) {
+        console.log("Error: " + msgError);
         res.statusCode = 400;
         res.json({ error: msgError });
     }
+}
+
+function GetCheckout(id) {
+    return new Promise((resolve, reject) => {
+        checkout.findOne({
+            where: {
+                id: id
+            }
+        }).then(checkout => {
+            resolve(checkout);
+        }).catch((msgError) => {
+            console.log("Error: " + msgError);
+            reject(undefined);
+        });
+    });
 }
 
 //Routes
@@ -173,5 +194,6 @@ router.delete("/checkout", authentication, (req, res) => {
 
 module.exports = {
     router,
-    CheckoutBelongsUser
+    CheckoutBelongsUser,
+    GetCheckout
 };
