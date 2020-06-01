@@ -20,6 +20,7 @@ function ThereIsMovementsCategory(categoryId) {
                 resolve("");
             }
         }).catch((msgError) => {
+            console.log("Error: " + msgError);
             reject(msgError);
         });
     });
@@ -40,6 +41,7 @@ function CategoryAlreadyExists(description, userId, id) {
                 resolve("");
             }
         }).catch((msgError) => {
+            console.log("Error: " + msgError);
             reject(msgError);
         });
     });
@@ -81,6 +83,7 @@ async function AddCategory(req, res) {
             res.json({ msg: "Success!" });
         });
     } catch (msgError) {
+        console.log("Error: " + msgError);
         res.statusCode = 400;
         res.json({ error: msgError });
     }
@@ -109,6 +112,7 @@ async function UpdateCategory(req, res) {
             }
         });
     } catch (msgError) {
+        console.log("Error: " + msgError);
         res.statusCode = 400;
         res.json({ error: msgError });
     }
@@ -126,6 +130,7 @@ function GetCategories(req, res) {
     }).then(categories => {
         res.json(categories);
     }).catch((msgError) => {
+        console.log("Error: " + msgError);
         res.statusCode = 500;
         res.json({ error: msgError });
     }); 
@@ -147,6 +152,7 @@ async function DeleteCategory(req, res) {
             res.json({ msg: "Success!" });
         });
     } catch (msgError) {
+        console.log("Error: " + msgError);
         res.statusCode = 400;
         res.json({ error: msgError });
     }
