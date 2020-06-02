@@ -13,7 +13,7 @@ A instalação é muito simples e pode ser feita em poucos minutos:
 3. Crie um banco de dados nessa nova instalação.
 4. Baixe os fontes e copie para uma pasta dentro desse ambiente.
 5. Configure o seu banco de dados no arquivo **connection.js** que fica na pasta **dao** do projeto
-6. O projeto possui um arquivo na pasta raíz chamado **package.json**. Dentro dele estão todas as dependêcias utilizadas. Basta rodar o comando ```npm install``` na pasta do projeto para que tudo seja baixado automaticamente.
+6. O projeto possui um arquivo na pasta raíz chamado **package.json**. Dentro dele estão todas as dependêcias utilizadas. Basta rodar o comando ```npm install``` na pasta do projeto para que tudo seja baixado automaticamente.</br></br>
 Caso algo saia errado, aqui vai uma listagem das bibliotecas utilizadas e os comandos para instalação:
 * [ExpressJS](https://expressjs.com/) / comando: ```npm install --save express```
 * [Sequelize](https://sequelize.org/) / comando: ```npm install --save sequelize```
