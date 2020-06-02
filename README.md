@@ -9,9 +9,9 @@ O VirtualCheckout é uma API rest escrita em JavaScript que roda sobre o interpr
 Ela utiliza bibliotecas muito poderosas e amplamente difundidas, além do banco de dados MySQL.
 A instalação é muito simples e pode ser feita em poucos minutos:
 1. Instale o [NodeJS](https://nodejs.org/en/) no ambiente onde irá rodar a API. No momento do desenvolvimento, foi utilizada a versão 12.17.0.
-2. Intale o MySQL server
-3. Crie um banco de dados nessa nova instalação
-4. Baixe os fontes e copie para uma pasta dentro desse ambiente
+2. Intale o MySQL server.
+3. Crie um banco de dados nessa nova instalação.
+4. Baixe os fontes e copie para uma pasta dentro desse ambiente.
 5. Configure o seu banco de dados no arquivo **connection.js** que fica na pasta **dao** do projeto
 6. O projeto possui um arquivo na pasta raíz chamado **package.json**. Dentro dele estão todas as dependêcias utilizadas. Basta rodar o comando ```npm install``` na pasta do projeto para que tudo seja baixado automaticamente.
 Caso algo saia errado, aqui vai uma listagem das bibliotecas utilizadas e os comandos para instalação:
