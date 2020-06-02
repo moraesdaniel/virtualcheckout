@@ -23,4 +23,4 @@ Caso algo saia errado, aqui vai uma listagem das bibliotecas utilizadas e os com
 </br>Caso queira rodar o servidor de forma mais fluida, sem precisar parar e reiniciar a cada mudança feita, basta instalar o nodemon
 * [nodemon](https://www.npmjs.com/package/nodemon) / comando: ```npm install -g nodemon```
 ## Certo, mas que serviços a API me oferece?
-Para uma listagem completa dos recursos, acesse o endpoint */help* da própria API.
+Para uma listagem completa dos recursos, acesse o [link da documentação](https://documenter.getpostman.com/view/1943546/SztG3RTE?version=latest) da API.
