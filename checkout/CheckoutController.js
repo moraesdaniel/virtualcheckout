@@ -95,11 +95,15 @@ async function Add(req, res) {
         await CheckoutAlreadyExists(description, userId, 0);
 
         checkout.create({
-            description: description,
+            description: description.toUpperCase(),
             userId: userId
         }).then(() => {
             res.statusCode = 200;
             res.json({ msg: "Success!" });
+        }).catch((msgError) => {
+            console.log("Error: " + msgError);
+            res.statusCode = 500;
+            res.json({ error: msgError });
         });
     } catch (msgError) {
         console.log("Error: " + msgError);
@@ -166,6 +170,10 @@ async function Update(req, res) {
         UpdateCheckout(id, description).then(() => {
             res.statusCode = 200;
             res.json({ msg: "Success" });
+        }).catch((msgError) => {
+            console.log("Error: " + msgError);
+            res.statusCode = 500;
+            res.json({ error: msgError });
         });
     } catch (msgError) {
         console.log("Error: " + msgError);
@@ -188,6 +196,10 @@ async function Delete(req, res) {
         }).then(() => {
             res.statusCode = 200;
             res.json({ msg: "Success!" });
+        }).catch((msgError) => {
+            console.log("Error: " + msgError);
+            res.statusCode = 500;
+            res.json({ error: msgError });
         });
     } catch (msgError) {
         console.log("Error: " + msgError);

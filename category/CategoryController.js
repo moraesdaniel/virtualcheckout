@@ -81,6 +81,10 @@ async function AddCategory(req, res) {
         }).then(() => {
             res.statusCode = 200;
             res.json({ msg: "Success!" });
+        }).catch((msgError) => {
+            console.log("Error: " + msgError);
+            res.statusCode = 500;
+            res.json({ error: msgError });
         });
     } catch (msgError) {
         console.log("Error: " + msgError);
@@ -110,6 +114,10 @@ async function UpdateCategory(req, res) {
                 res.statusCode = 400;
                 res.json({ msg: "Category not found!" });
             }
+        }).catch((msgError) => {
+            console.log("Error: " + msgError);
+            res.statusCode = 500;
+            res.json({ error: msgError });
         });
     } catch (msgError) {
         console.log("Error: " + msgError);
@@ -150,6 +158,10 @@ async function DeleteCategory(req, res) {
         }).then(() => {
             res.statusCode = 200;
             res.json({ msg: "Success!" });
+        }).catch((msgError) => {
+            console.log("Error: " + msgError);
+            res.statusCode = 500;
+            res.json({ error: msgError });
         });
     } catch (msgError) {
         console.log("Error: " + msgError);
