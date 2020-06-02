@@ -3,7 +3,7 @@
 VirtualCheckout é uma API rest que foi criada com o objetivo de sanar a necessidade de um controle de caixa simples.
 Com ela você poderá cadastrar um caixa, uma categoria, e lançar as movimentações deste caixa.
 As movimentações poderão ser tanto de entrada quanto de saída, e estarão atreladas a um caixa e a uma categoria para classificá-las.
-Pode ficar tranquilo que outros usuários não verão seu caixa pois, a API, possui autenticação via token.
+Pode ficar tranquilo que outros usuários não verão seu caixa pois a API possui autenticação via token.
 ## Como instalar?
 O VirtualCheckout é uma API rest escrita em JavaScript que roda sobre o interpretador NodeJS.
 Ela utiliza bibliotecas muito poderosas e amplamente difundidas, além do banco de dados MySQL.
