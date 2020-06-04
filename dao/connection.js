@@ -6,7 +6,8 @@ const host = "localhost";
 
 const connection = new sequelize(DBName, user, password, {
     host: host,
-    dialect: "mysql"
+    dialect: "mysql",
+    timezone: "-03:00"
 });
 
 module.exports = connection;
