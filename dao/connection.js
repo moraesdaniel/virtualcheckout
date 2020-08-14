@@ -1,7 +1,7 @@
 const sequelize = require("sequelize");
-const DBName = "caixavirtual";
+const DBName = "dbname";
 const user = "root";
-const password = "m@ster2020";
+const password = "root";
 const host = "localhost";
 
 const connection = new sequelize(DBName, user, password, {
